@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#0b2447" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Baldíos Media" />
+  <title>Baldíos Media</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon.svg" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <div>
+        <div class="eyebrow">Combustibles Los Baldíos</div>
+        <h1>Baldíos Media</h1>
+        <p>Haz una foto, elige una sección y súbela organizada al repositorio.</p>
+      </div>
+      <div class="status" id="connectionStatus">Preparado</div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="card">
+      <div class="section-head">
+        <div>
+          <span class="step">1</span>
+          <h2>Conectar GitHub</h2>
+        </div>
+        <span class="secure">Solo en este dispositivo</span>
+      </div>
+
+      <label class="label" for="token">Token Fine-grained de GitHub</label>
+      <div class="token-row">
+        <input id="token" type="password" autocomplete="off" placeholder="github_pat_..." />
+        <button class="secondary" id="toggleToken" type="button">Ver</button>
+      </div>
+      <label class="remember">
+        <input id="rememberToken" type="checkbox" />
+        Recordar token en este dispositivo
+      </label>
+      <p class="hint">Debe tener permiso <strong>Contents: Read and write</strong> solo para <code>AlbertoBrown/baldios-media</code>.</p>
+      <div class="actions">
+        <button class="secondary" id="testConnection" type="button">Comprobar conexión</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-head">
+        <div>
+          <span class="step">2</span>
+          <h2>Nueva foto</h2>
+        </div>
+      </div>
+
+      <div class="camera-grid">
+        <label class="camera-button">
+          <input id="cameraInput" type="file" accept="image/*" capture="environment" />
+          <span class="camera-icon">📷</span>
+          <strong>Hacer foto</strong>
+          <small>Abre la cámara trasera</small>
+        </label>
+
+        <label class="camera-button">
+          <input id="galleryInput" type="file" accept="image/*" />
+          <span class="camera-icon">🖼️</span>
+          <strong>Elegir foto</strong>
+          <small>Desde la galería</small>
+        </label>
+      </div>
+
+      <div id="previewWrap" class="preview-wrap hidden">
+        <img id="preview" alt="Vista previa" />
+        <div class="file-info" id="fileInfo"></div>
+      </div>
+
+      <label class="label" for="category">Sección</label>
+      <select id="category">
+        <option value="sonda-veeder">Sonda Veeder</option>
+        <option value="proconsi">Proconsi</option>
+        <option value="camiones">Camiones</option>
+        <option value="gasocentro">Gasocentro</option>
+        <option value="instalaciones">Instalaciones</option>
+        <option value="otros">Otros</option>
+      </select>
+
+      <label class="label" for="title">Título / referencia</label>
+      <input id="title" type="text" maxlength="80" placeholder="Ej. Sonda depósito GOA · lectura mañana" />
+
+      <label class="label" for="notes">Notas opcionales</label>
+      <textarea id="notes" rows="3" maxlength="300" placeholder="Observaciones, matrícula, depósito, incidencia..."></textarea>
+
+      <div class="upload-summary" id="uploadSummary">Selecciona una foto para continuar.</div>
+
+      <button class="primary" id="uploadButton" type="button" disabled>
+        Subir foto a GitHub
+      </button>
+
+      <div class="progress hidden" id="progress">
+        <div class="spinner"></div>
+        <span id="progressText">Preparando imagen…</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-head">
+        <div>
+          <span class="step">3</span>
+          <h2>Accesos por sección</h2>
+        </div>
+      </div>
+      <div class="category-grid" id="categoryGrid"></div>
+      <p class="hint">Las carpetas se crean automáticamente al subir la primera foto de cada sección.</p>
+    </section>
+
+    <section class="warning">
+      <strong>Privacidad:</strong> este repositorio está actualmente en modo público. Cualquier imagen que subas podrá verse desde Internet mientras siga siendo público.
+    </section>
+  </main>
+
+  <div class="toast hidden" id="toast" role="status"></div>
+
+  <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+    }
+  </script>
+</body>
+</html>
