@@ -142,20 +142,65 @@ els.testConnection.addEventListener('click', async () => {
   }
 });
 
+function getOriginalExtension(file) {
+  const byName = (file.name || '').split('.').pop()?.toLowerCase();
+  if (byName && /^[a-z0-9]{2,5}$/.test(byName)) return byName;
+
+  const mimeMap = {
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/webp': 'webp',
+    'image/heic': 'heic',
+    'image/heif': 'heif',
+    'image/gif': 'gif'
+  };
+  return mimeMap[file.type] || 'img';
+}
+
 async function compressImage(file) {
-  const bitmap = await createImageBitmap(file);
-  const max = 2200;
-  const scale = Math.min(1, max / Math.max(bitmap.width, bitmap.height));
-  const width = Math.round(bitmap.width * scale);
-  const height = Math.round(bitmap.height * scale);
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(bitmap, 0, 0, width, height);
-  bitmap.close();
-  const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.84));
-  return blob || file;
+  try {
+    if (typeof createImageBitmap !== 'function') {
+      throw new Error('El navegador no permite comprimir esta imagen.');
+    }
+
+    const bitmap = await createImageBitmap(file);
+    const max = 2200;
+    const scale = Math.min(1, max / Math.max(bitmap.width, bitmap.height));
+    const width = Math.round(bitmap.width * scale);
+    const height = Math.round(bitmap.height * scale);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('No se pudo preparar la imagen.');
+
+    ctx.drawImage(bitmap, 0, 0, width, height);
+    bitmap.close();
+
+    const blob = await new Promise(resolve =>
+      canvas.toBlob(resolve, 'image/jpeg', 0.84)
+    );
+
+    if (!blob) throw new Error('No se pudo comprimir la imagen.');
+
+    return {
+      blob,
+      extension: 'jpg',
+      mime: 'image/jpeg',
+      compressed: true
+    };
+  } catch (error) {
+    console.warn('No se pudo comprimir. Se subirá el archivo original.', error);
+
+    return {
+      blob: file,
+      extension: getOriginalExtension(file),
+      mime: file.type || 'application/octet-stream',
+      compressed: false
+    };
+  }
 }
 
 function blobToBase64(blob) {
@@ -184,18 +229,22 @@ els.uploadButton.addEventListener('click', async () => {
   els.progress.classList.remove('hidden');
 
   try {
-    els.progressText.textContent = 'Comprimiendo imagen…';
-    const imageBlob = await compressImage(currentFile);
+    els.progressText.textContent = 'Preparando imagen…';
+    const preparedImage = await compressImage(currentFile);
+
+    if (!preparedImage.compressed) {
+      els.progressText.textContent = 'Formato original detectado · se subirá sin comprimir…';
+    }
 
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth()+1).padStart(2,'0');
     const titleSlug = cleanSlug(els.title.value) || 'foto';
-    const filename = `${localStamp(now)}_${titleSlug}.jpg`;
+    const filename = `${localStamp(now)}_${titleSlug}.${preparedImage.extension}`;
     const path = `media/${els.category.value}/${year}/${month}/${filename}`;
 
     els.progressText.textContent = 'Preparando subida…';
-    const content = await blobToBase64(imageBlob);
+    const content = await blobToBase64(preparedImage.blob);
 
     const note = els.notes.value.trim();
     const commitMessage = `Añadir foto · ${categories.find(c=>c[0]===els.category.value)?.[1] || els.category.value}${els.title.value.trim() ? ' · ' + els.title.value.trim() : ''}`;
